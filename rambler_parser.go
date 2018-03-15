@@ -20,7 +20,7 @@ type RamblerSearch struct {
 	}
 }
 
-func GetRamblerShowtimes(movieName, city, region string) (*SearchResult, error) {
+func GetRamblerShowtimes(movieName, city, region string, timezone *time.Location) (*SearchResult, error) {
 	searchRes, err := getMovieDesciptions(movieName)
 	if err != nil {
 		return nil, err
@@ -29,7 +29,7 @@ func GetRamblerShowtimes(movieName, city, region string) (*SearchResult, error) 
 		return nil, NoSuchMovieError{movieName}
 	}
 	name := searchRes.Items[0].Name
-	cinemas, err := getMovieShowtimes(searchRes.Items[0].Link, region)
+	cinemas, err := getMovieShowtimes(searchRes.Items[0].Link, region, timezone)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func getMovieDesciptions(movieName string) (*RamblerSearch, error) {
 	return &searchResult, nil
 }
 
-func getMovieShowtimes(link, region string) ([]Cinema, error) {
+func getMovieShowtimes(link, region string, timezone *time.Location) ([]Cinema, error) {
 	raw, err := soup.Get(link)
 	if err != nil {
 		return nil, err
@@ -79,7 +79,9 @@ func getMovieShowtimes(link, region string) ([]Cinema, error) {
 			if subway == "" {
 				continue
 			}
-			if !strings.Contains(strings.ToLower(subway), strings.ToLower(region)) {
+			replacer := strings.NewReplacer("ё", "е",
+				"Ё", "Е")
+			if !strings.Contains(strings.ToLower(replacer.Replace(subway)), strings.ToLower(replacer.Replace(region))) {
 				continue
 			}
 		}
@@ -90,7 +92,10 @@ func getMovieShowtimes(link, region string) ([]Cinema, error) {
 		}
 		showtimes := make([]Showtime, 0)
 		for _, showtimeBlock := range scheduleBlock.FindAll("li", "class", "btn_rasp") {
-			if time, err := time.Parse("15:04", strings.TrimSpace(showtimeBlock.Text())); err == nil {
+			if time, err := time.ParseInLocation("15:04", strings.TrimSpace(showtimeBlock.Text()), timezone); err == nil {
+				if time.Hour() == 0 {
+					time = time.AddDate(0, 0, 1)
+				}
 				showtimes = append(showtimes, Showtime{Time: time})
 			}
 		}
