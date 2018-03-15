@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -79,6 +80,8 @@ type YandexLocations struct {
 
 const YANDEX_REQUEST_TEMPLATE = "https://geocode-maps.yandex.ru/1.x/?format=json&geocode=%s"
 
+var UnknownLocationError = errors.New("unknown location")
+
 func GetUserLocation(phrase string) (*Location, error) {
 	resp, err := http.Get(fmt.Sprintf(YANDEX_REQUEST_TEMPLATE, url.QueryEscape(phrase)))
 	if err != nil {
@@ -96,7 +99,7 @@ func GetUserLocation(phrase string) (*Location, error) {
 	// we should always try to find a nearest subway station
 	// if there is no subway stations, find the first street in the city and return city
 	if len(yandexLocs.Response.GeoObjectCollection.FeatureMember) == 0 {
-		return nil, fmt.Errorf("unknown location: %s", phrase)
+		return nil, UnknownLocationError
 	}
 	for _, member := range yandexLocs.Response.GeoObjectCollection.FeatureMember {
 		kind := member.GeoObject.MetaDataProperty.GeocoderMetaData.Kind
@@ -125,5 +128,5 @@ func GetUserLocation(phrase string) (*Location, error) {
 	if city != "" {
 		return &Location{City: city}, nil
 	}
-	return nil, fmt.Errorf("cant find locations with address: %s", phrase)
+	return nil, UnknownLocationError
 }

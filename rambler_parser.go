@@ -18,6 +18,10 @@ const MSK_NAME = "москва"
 const SPB_NAME = "санкт-петербург"
 const NN_NAMe = "нижний новгород"
 
+var NoSuchMovie = NoSuchMovieError{}
+
+var httpClient = &http.Client{}
+
 type RamblerSearch struct {
 	Items []struct {
 		Link string
@@ -31,7 +35,7 @@ func GetRamblerShowtimes(movieName, city, region string, timezone *time.Location
 		return nil, err
 	}
 	if len(searchRes.Items) == 0 {
-		return nil, NoSuchMovieError{movieName}
+		return nil, NoSuchMovie
 	}
 	name := searchRes.Items[0].Name
 	link := formatLink(searchRes.Items[0].Link, city)
@@ -92,6 +96,9 @@ func getMovieShowtimes(link, city, region string, timezone *time.Location) ([]Ci
 		}
 		cinemaName := cinemaInfoBlock.Find("div", "class", "rasp_title").Find("span", "class", "s-name").Text()
 		addressBlock := cinemaInfoBlock.Find("div", "class", "rasp_place s-place")
+		if addressBlock.Error != nil {
+			continue
+		}
 		address := addressBlock.Find("span").Text()
 		subwayBlock := addressBlock.Find("div", "class", "rasp_place_metro")
 		var subway string

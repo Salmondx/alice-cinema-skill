@@ -102,7 +102,11 @@ func (p *MessageProcessor) Process(aliceRequest *AliceRequest) *AliceResponse {
 		// if location retrieval is in progress, we should complete it
 		newLocation, err := GetUserLocation(phrase)
 		if err != nil {
-			return say(session, p.getAnswer("UNKNOWN_LOCATION"))
+			if err == UnknownLocationError {
+				return say(session, p.getAnswer("UNKNOWN_LOCATION"))
+			}
+			log.Printf("[ERROR] failed to get info from yandex: %v", err)
+			return say(session, p.getAnswer("SYSTEM_ERROR"))
 		}
 
 		newLocation.Completed = true
@@ -113,7 +117,7 @@ func (p *MessageProcessor) Process(aliceRequest *AliceRequest) *AliceResponse {
 	} else {
 		// buttons actions
 		if phrase == GET_ADDRESS {
-			log.Printf("User %s GET_ADDRESS request", userID)
+			log.Printf("[INFO] User %s GET_ADDRESS request", userID)
 			address := "Ваш адрес: город " + location.City
 			if location.Subway != "" {
 				address += ", метро " + location.Subway
@@ -121,7 +125,7 @@ func (p *MessageProcessor) Process(aliceRequest *AliceRequest) *AliceResponse {
 			return sayWithButtons(session, address)
 
 		} else if phrase == CHANGE_ADDRESS {
-			log.Printf("User %s CHANGE_ADDRESS request", userID)
+			log.Printf("[INFO] User %s CHANGE_ADDRESS request", userID)
 			location.InProgress = true
 			location.Completed = false
 			p.storage.Save(userID, location)
@@ -142,9 +146,13 @@ func (p *MessageProcessor) Process(aliceRequest *AliceRequest) *AliceResponse {
 		searchResult, err := GetRamblerShowtimes(movie, location.City, location.Subway, timezone)
 
 		if err != nil {
+			if err == NoSuchMovie {
+				log.Printf("[ERROR] failed to load data from rambler: %v", err)
+				return sayTerminal(session, p.getAnswer("SYSTEM_ERROR"))
+			}
 			return sayWithButtons(session, p.getAnswer("UNKNOWN_MOVIE"))
 		}
-		log.Printf("User %s found cinemas with movie %s: %d", userID, movie, len(searchResult.Cinemas))
+		log.Printf("[INFO] User %s found cinemas with movie %s: %d", userID, movie, len(searchResult.Cinemas))
 		if isNoShowtimes(searchResult) {
 			return sayWithButtons(session, p.getAnswer("NO_SHOWTIMES"))
 		}
@@ -289,8 +297,8 @@ func availableAnswers() map[string][]string {
 		"Не могу найти такой адрес, попробуйте ещё",
 	}
 	answers["LOCATION_CONFIRMED"] = []string{
-		"Отлично! На какой фильм вы хотите найти ближайшие сеансы?",
-		"Хорошо, я запомнила. На какой фильм вы хотите сходить?",
+		"Отлично! А теперь скажите название фильма, который вы хотите найти",
+		"Хорошо, я запомнила. Скажите название фильма, который вы хотите найти",
 	}
 	answers["UNKNOWN_MOVIE"] = []string{
 		"Я вас почему то не понимаю, скажите название фильма, например: \"Звездные Войны\"",
@@ -305,6 +313,10 @@ func availableAnswers() map[string][]string {
 	}
 	answers["CHANGE_ADDRESS"] = []string{
 		"Хорошо, давайте поменяем адрес. Скажите в каком городе и на какой станции метро, если оно есть, вы живете",
+	}
+	answers["SYSTEM_ERROR"] = []string{
+		"Что-то мне стало нехорошо, попробуйте позже, пожалуйста",
+		"Что-то мне сегодня не очень, попробуйте через некоторое время",
 	}
 	return answers
 }

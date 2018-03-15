@@ -55,8 +55,8 @@ type AliceResponse struct {
 func main() {
 	processor := NewProcessor(NewStorage())
 	http.HandleFunc("/dialog", handler(processor))
-	log.Printf("[INFO] Starting server on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Printf("[INFO] Starting server on port 5000")
+	log.Fatal(http.ListenAndServe(":5000", nil))
 }
 
 func handler(processor *MessageProcessor) func(http.ResponseWriter, *http.Request) {
