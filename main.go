@@ -35,34 +35,24 @@ type AliceRequest struct {
 	Version string  `json:"version"`
 }
 
+type Button struct {
+	Title string `json:"title"`
+	URL   string `json:"url,omitempty"`
+	Hide  bool   `json:"hide"`
+}
+
 type AliceResponse struct {
 	Version  string  `json:"version"`
 	Session  Session `json:"session"`
 	Response struct {
-		Text    string `json:"text"`
-		Tts     string `json:"tts"`
-		Buttons []struct {
-			Title   string `json:"title"`
-			Payload struct {
-			} `json:"payload"`
-			URL  string `json:"url"`
-			Hide bool   `json:"hide"`
-		} `json:"buttons"`
-		EndSession bool `json:"end_session"`
+		Text       string   `json:"text"`
+		Tts        string   `json:"tts"`
+		Buttons    []Button `json:"buttons"`
+		EndSession bool     `json:"end_session"`
 	} `json:"response"`
 }
 
 func main() {
-	// fmt.Println(GetShowtimes("излом времени", "москва", "теплый стан"))
-	// fmt.Println(GetRamblerShowtimes("черная пантера", "", "ясенево"))
-
-	// loc, err := GetUserLocation("в москве симферопольский проспект")
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	os.Exit(1)
-	// }
-	// fmt.Println(loc.Subway + ": " + loc.City)
-
 	processor := NewProcessor(NewStorage())
 	http.HandleFunc("/dialog", handler(processor))
 	log.Printf("[INFO] Starting server on port 8080")

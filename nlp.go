@@ -62,6 +62,9 @@ func Default() *Template {
 	return t
 }
 
+const CHANGE_ADDRESS = "Сменить адрес"
+const GET_ADDRESS = "Мой адрес"
+
 // MessageProcessor processes user phrases from Alice skill
 type MessageProcessor struct {
 	storage  LocationStorage
@@ -108,26 +111,44 @@ func (p *MessageProcessor) Process(aliceRequest *AliceRequest) *AliceResponse {
 
 		return say(session, p.getAnswer("LOCATION_CONFIRMED"))
 	} else {
+		// buttons actions
+		if phrase == GET_ADDRESS {
+			log.Printf("User %s GET_ADDRESS request", userID)
+			address := "Ваш адрес: город " + location.City
+			if location.Subway != "" {
+				address += ", метро " + location.Subway
+			}
+			return sayWithButtons(session, address)
+
+		} else if phrase == CHANGE_ADDRESS {
+			log.Printf("User %s CHANGE_ADDRESS request", userID)
+			location.InProgress = true
+			location.Completed = false
+			p.storage.Save(userID, location)
+
+			return say(session, p.getAnswer("CHANGE_ADDRESS"))
+		}
+
 		// if location exists, we should process requests as is
 		extracted, ok := p.template.Matches(strings.ToLower(phrase))
 		if !ok {
-			return say(session, p.getAnswer("UNKNOWN_MOVIE"))
+			return sayWithButtons(session, p.getAnswer("UNKNOWN_MOVIE"))
 		}
 		movie, ok := extracted["movie"]
 		if !ok {
-			return say(session, p.getAnswer("UNKNOWN_MOVIE"))
+			return sayWithButtons(session, p.getAnswer("UNKNOWN_MOVIE"))
 		}
 
 		searchResult, err := GetRamblerShowtimes(movie, location.City, location.Subway, timezone)
 
 		if err != nil {
-			return say(session, p.getAnswer("UNKNOWN_MOVIE"))
+			return sayWithButtons(session, p.getAnswer("UNKNOWN_MOVIE"))
 		}
 		log.Printf("User %s found cinemas with movie %s: %d", userID, movie, len(searchResult.Cinemas))
 		if isNoShowtimes(searchResult) {
-			return say(session, p.getAnswer("NO_SHOWTIMES"))
+			return sayWithButtons(session, p.getAnswer("NO_SHOWTIMES"))
 		}
-		return say(session, constructShowtimesPhrase(searchResult, currentTime))
+		return sayWithButtons(session, constructShowtimesPhrase(searchResult, currentTime))
 	}
 }
 
@@ -141,7 +162,7 @@ func constructShowtimesPhrase(searchResult *SearchResult, userTime time.Time) st
 	var builder strings.Builder
 
 	for i := 0; i < len(showtimes); i++ {
-		if i > 3 {
+		if i > 2 {
 			break
 		}
 
@@ -162,6 +183,7 @@ func constructShowtimesPhrase(searchResult *SearchResult, userTime time.Time) st
 				builder.WriteString("в " + showtime.Showtimes[0].Time.Format("15:04"))
 				builder.WriteString(" и в " + showtime.Showtimes[1].Time.Format("15:04") + " часов")
 			}
+			builder.WriteString(". ")
 		}
 	}
 
@@ -211,6 +233,22 @@ func isNoShowtimes(search *SearchResult) bool {
 		}
 	}
 	return true
+}
+
+func sayWithButtons(session Session, phrase string) *AliceResponse {
+	response := say(session, phrase)
+	response.Response.Buttons = []Button{
+		Button{
+			Title: "Мой адрес",
+			Hide:  true,
+		},
+		Button{
+			Title: "Сменить адрес",
+			Hide:  true,
+		},
+	}
+	return response
+
 }
 
 func say(session Session, phrase string) *AliceResponse {
@@ -264,6 +302,9 @@ func availableAnswers() map[string][]string {
 		"Не могу найти сеансов. Похоже, что в вашем регионе сейчас этот фильм не идет",
 		"По вашему адресу сейчас нет сеансов. Увы. Но вы всегда можете пойти на пробежку, спорт это очень полезно!",
 		"Сеансов на сегодня я не вижу. Придется заняться чем-то ещё",
+	}
+	answers["CHANGE_ADDRESS"] = []string{
+		"Хорошо, давайте поменяем адрес. Скажите в каком городе и на какой станции метро, если оно есть, вы живете",
 	}
 	return answers
 }
