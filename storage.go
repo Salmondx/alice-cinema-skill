@@ -11,7 +11,7 @@ const tableName = "alice-cinema-skill"
 
 // Location contains information about users location
 type Location struct {
-	UserID     string `json:"userID`
+	UserID     string `json:"userID"`
 	InProgress bool   `json:"inProgress"`
 	Completed  bool   `json:"completed"`
 	Subway     string `json:"subway"`

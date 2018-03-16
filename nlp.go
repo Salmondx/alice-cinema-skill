@@ -166,10 +166,10 @@ func (p *MessageProcessor) Process(aliceRequest *AliceRequest) *AliceResponse {
 
 		if err != nil {
 			if err == NoSuchMovie {
-				log.Printf("[ERROR] failed to load data from rambler: %v", err)
-				return sayTerminal(session, p.getAnswer("SYSTEM_ERROR"))
+				return sayWithButtons(session, p.getAnswer("UNKNOWN_MOVIE"))
 			}
-			return sayWithButtons(session, p.getAnswer("UNKNOWN_MOVIE"))
+			log.Printf("[ERROR] failed to load data from rambler: %v", err)
+			return sayTerminal(session, p.getAnswer("SYSTEM_ERROR"))
 		}
 		log.Printf("[INFO] User %s found cinemas with movie %s: %d", userID, movie, len(searchResult.Cinemas))
 		if isNoShowtimes(searchResult) {

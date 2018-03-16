@@ -98,7 +98,7 @@ func getMovieShowtimes(link, city, region string, timezone *time.Location) ([]Ci
 			continue
 		}
 		cinemaName := cinemaInfoBlock.Find("div", "class", "rasp_title").Find("span", "class", "s-name").Text()
-		addressBlock := cinemaInfoBlock.Find("div", "class", "rasp_place s-place")
+		addressBlock := cinemaInfoBlock.Find("div", "class", "rasp_place")
 		if addressBlock.Error != nil {
 			continue
 		}
@@ -132,6 +132,12 @@ func getMovieShowtimes(link, city, region string, timezone *time.Location) ([]Ci
 		}
 		showtimes := make([]Showtime, 0)
 		for _, showtimeBlock := range scheduleBlock.FindAll("li", "class", "btn_rasp") {
+			attrs := showtimeBlock.Attrs()["class"]
+			if strings.Contains(attrs, "inactive") {
+				// should skip showtimes that are in past
+				continue
+			}
+
 			if time, err := time.ParseInLocation("15:04", strings.TrimSpace(showtimeBlock.Text()), timezone); err == nil {
 				if time.Hour() == 0 || time.Hour() == 1 {
 					time = time.AddDate(0, 0, 1)
