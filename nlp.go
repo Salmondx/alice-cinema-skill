@@ -84,18 +84,25 @@ func (p *MessageProcessor) Process(aliceRequest *AliceRequest) *AliceResponse {
 
 	currentTime := time.Now().In(timezone)
 
-	location := p.storage.Get(userID)
-
 	session := aliceRequest.Session
+
+	location, err := p.storage.Get(userID)
+	if err != nil {
+		log.Printf("[ERROR] Failed to load data from storage: %v", err)
+		return say(session, p.getAnswer("SYSTEM_ERROR"))
+	}
 
 	phrase := aliceRequest.Request.Command
 
-	log.Printf("User %s says: %s", userID, phrase)
+	log.Printf("[INFO] User %s says: %s", userID, phrase)
 
 	// if location is unknown, we have to retrieve it from user
 	if !location.Completed && !location.InProgress {
 		location.InProgress = true
-		p.storage.Save(userID, location)
+		if err := p.storage.Save(userID, location); err != nil {
+			log.Printf("[ERROR] Failed to save a user progress: %v", err)
+			return say(session, p.getAnswer("SYSTEM_ERROR"))
+		}
 		return say(session, p.getAnswer("ASK_LOCATION"))
 
 	} else if !location.Completed && location.InProgress {
@@ -111,7 +118,10 @@ func (p *MessageProcessor) Process(aliceRequest *AliceRequest) *AliceResponse {
 
 		newLocation.Completed = true
 		newLocation.InProgress = false
-		p.storage.Save(userID, newLocation)
+		if err = p.storage.Save(userID, newLocation); err != nil {
+			log.Printf("[ERROR] Failed to save a user location: %v", err)
+			return say(session, p.getAnswer("SYSTEM_ERROR"))
+		}
 
 		return say(session, p.getAnswer("LOCATION_CONFIRMED"))
 	} else {
@@ -128,7 +138,10 @@ func (p *MessageProcessor) Process(aliceRequest *AliceRequest) *AliceResponse {
 			log.Printf("[INFO] User %s CHANGE_ADDRESS request", userID)
 			location.InProgress = true
 			location.Completed = false
-			p.storage.Save(userID, location)
+			if err := p.storage.Save(userID, location); err != nil {
+				log.Printf("[ERROR] Fail to change a user address: %v", err)
+				return say(session, p.getAnswer("SYSTEM_ERROR"))
+			}
 
 			return say(session, p.getAnswer("CHANGE_ADDRESS"))
 		}

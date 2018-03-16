@@ -157,21 +157,9 @@ func findSchedule(redirectLink string) ([]Cinema, error) {
 }
 
 func GetWithProxy(siteURL string) (string, error) {
-
-	// dialer, err := proxy.SOCKS5("tcp", "189.91.159.85:3128", nil, proxy.Direct)
-	// if err != nil {
-	// 	return "", err
-	// }
-	// // setup a http client
-	// httpTransport := &http.Transport{}
-	// httpTransport.Dial = dialer.Dial
-
 	requestURL := "https://api.proxycrawl.com/?token=&url=" + siteURL
 
 	httpClient := &http.Client{}
-	// Transport: httpTransport,
-	// Timeout: 12 * time.Second}
-	// set our socks5 as the dialer
 
 	req, err := http.NewRequest("GET", requestURL, nil)
 	if err != nil {

@@ -53,7 +53,11 @@ type AliceResponse struct {
 }
 
 func main() {
-	processor := NewProcessor(NewStorage())
+	dynamoStorage, err := NewDynamoStorage()
+	if err != nil {
+		log.Fatal("[ERROR] Failed to init a dynamostorage: %v", err)
+	}
+	processor := NewProcessor(dynamoStorage)
 	http.HandleFunc("/dialog", handler(processor))
 	log.Printf("[INFO] Starting server on port 5000")
 	log.Fatal(http.ListenAndServe(":5000", nil))
@@ -62,28 +66,33 @@ func main() {
 func handler(processor *MessageProcessor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
+			log.Printf("[WARN] Wrong method received: %s", r.Method)
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
 
 		var aliceRequest AliceRequest
 		if err := json.NewDecoder(r.Body).Decode(&aliceRequest); err != nil {
+			log.Printf("[WARN] Wrong request received: %s", err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
 		userID := aliceRequest.Session.UserID
 		if userID == "" {
+			log.Printf("[WARN] Request without userID received")
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		_, err := time.LoadLocation(aliceRequest.Meta.Timezone)
 		if err != nil {
+			log.Printf("[WARN] Request with wrong timezone received: %s", aliceRequest.Meta.Timezone)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
 		response := processor.Process(&aliceRequest)
+		w.Header().Add("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(response)
 	}
 }
