@@ -2,12 +2,14 @@ package main
 
 import "time"
 
+// Showtime containes info about movie seance
 type Showtime struct {
 	Time   time.Time
 	Price  string
 	Format string
 }
 
+// Cinema contains info about cinema and a slice of showtimes
 type Cinema struct {
 	Name      string
 	Address   string
@@ -15,6 +17,7 @@ type Cinema struct {
 	Showtimes []Showtime
 }
 
+// SearchResult contains info about movie seances
 type SearchResult struct {
 	Movie   string
 	Cinemas []Cinema

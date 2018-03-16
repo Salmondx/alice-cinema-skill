@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// YandexLocations contains information about location
 type YandexLocations struct {
 	Response struct {
 		GeoObjectCollection struct {
@@ -78,12 +79,14 @@ type YandexLocations struct {
 	} `json:"response"`
 }
 
-const YANDEX_REQUEST_TEMPLATE = "https://geocode-maps.yandex.ru/1.x/?format=json&geocode=%s"
+const yandexRequestTemplate = "https://geocode-maps.yandex.ru/1.x/?format=json&geocode=%s"
 
+// UnknownLocationError fires when location with given name not found
 var UnknownLocationError = errors.New("unknown location")
 
+// GetUserLocation searches a location from the user phrase in Yandex Maps API
 func GetUserLocation(phrase string) (*Location, error) {
-	resp, err := http.Get(fmt.Sprintf(YANDEX_REQUEST_TEMPLATE, url.QueryEscape(phrase)))
+	resp, err := http.Get(fmt.Sprintf(yandexRequestTemplate, url.QueryEscape(phrase)))
 	if err != nil {
 		return nil, err
 	}

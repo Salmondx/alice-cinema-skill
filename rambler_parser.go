@@ -13,15 +13,17 @@ import (
 	"github.com/anaskhan96/soup"
 )
 
-const RAMBLER_SEARCH_TEMPLATE = "https://kassa.rambler.ru/search?search_str=%s"
-const MSK_NAME = "москва"
-const SPB_NAME = "санкт-петербург"
-const NN_NAMe = "нижний новгород"
+const ramblerSearchTemplate = "https://kassa.rambler.ru/search?search_str=%s"
+const mskName = "москва"
+const spbName = "санкт-петербург"
+const nnName = "нижний новгород"
 
+// NoSuchMovie fired when movie with given name is not found
 var NoSuchMovie = NoSuchMovieError{}
 
 var httpClient = &http.Client{}
 
+// RamblerSearch contains info about matching movies
 type RamblerSearch struct {
 	Items []struct {
 		Link string
@@ -29,6 +31,7 @@ type RamblerSearch struct {
 	}
 }
 
+// GetRamblerShowtimes retrieves showtimes info about the movie in provided region with sort logic based on user time
 func GetRamblerShowtimes(movieName, city, region string, timezone *time.Location) (*SearchResult, error) {
 	searchRes, err := getMovieDesciptions(movieName)
 	if err != nil {
@@ -54,11 +57,11 @@ func formatLink(link, city string) string {
 	cityCode := ""
 	city = strings.ToLower(city)
 	switch city {
-	case MSK_NAME:
+	case mskName:
 		cityCode = "msk"
-	case SPB_NAME:
+	case spbName:
 		cityCode = "spb"
-	case NN_NAMe:
+	case nnName:
 		cityCode = "nnovgorod"
 	default:
 		cityCode = strings.Replace(unidecode.Unidecode(city), " ", "-", -1)
@@ -67,7 +70,7 @@ func formatLink(link, city string) string {
 }
 
 func getMovieDesciptions(movieName string) (*RamblerSearch, error) {
-	resp, err := http.Get(fmt.Sprintf(RAMBLER_SEARCH_TEMPLATE, url.QueryEscape(movieName)))
+	resp, err := http.Get(fmt.Sprintf(ramblerSearchTemplate, url.QueryEscape(movieName)))
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +113,7 @@ func getMovieShowtimes(link, city, region string, timezone *time.Location) ([]Ci
 			cityLower := strings.ToLower(city)
 
 			// if user is from moscow of saint-petersburg, than follow a subway comparrison block
-			if cityLower == MSK_NAME || cityLower == SPB_NAME {
+			if cityLower == mskName || cityLower == spbName {
 				// if region is provided but there is no subway info for the cinema - skip it
 				if subway == "" {
 					continue

@@ -9,10 +9,13 @@ import (
 	"time"
 )
 
+// Template is a container for multiple regular expressions
+// used for match a phrase against some intent
 type Template struct {
 	regexps []*regexp.Regexp
 }
 
+// New creates a new template based on provided regular expressions
 func New(regExpressions ...string) (*Template, error) {
 	regexps := make([]*regexp.Regexp, 0)
 	for _, phrase := range regExpressions {
@@ -26,6 +29,8 @@ func New(regExpressions ...string) (*Template, error) {
 	return &Template{regexps}, nil
 }
 
+// Matches match a user phrase on multiple regular expressions in template.
+// If one of regexps are matched, then the whole phrase satisfies a given template.
 func (t *Template) Matches(phrase string) (map[string]string, bool) {
 	for _, regexp := range t.regexps {
 		match := regexp.FindStringSubmatch(phrase)
@@ -43,6 +48,7 @@ func (t *Template) Matches(phrase string) (map[string]string, bool) {
 	return nil, false
 }
 
+// Default creates a default template for movie matching
 func Default() *Template {
 	t, _ := New(
 		`.*(?:сеансы|расписание|время|когда идет|когда идут|когда будет|когда показывают).*(?:фильма|фильм|кино|кинофильма|кинофильм) (?P<movie>.*)`,
@@ -62,8 +68,8 @@ func Default() *Template {
 	return t
 }
 
-const CHANGE_ADDRESS = "Сменить адрес"
-const GET_ADDRESS = "Мой адрес"
+const changeAddress = "Сменить адрес"
+const getAddress = "Мой адрес"
 
 // MessageProcessor processes user phrases from Alice skill
 type MessageProcessor struct {
@@ -126,7 +132,7 @@ func (p *MessageProcessor) Process(aliceRequest *AliceRequest) *AliceResponse {
 		return say(session, p.getAnswer("LOCATION_CONFIRMED"))
 	} else {
 		// buttons actions
-		if phrase == GET_ADDRESS {
+		if phrase == getAddress {
 			log.Printf("[INFO] User %s GET_ADDRESS request", userID)
 			address := "Ваш адрес: город " + location.City
 			if location.Subway != "" {
@@ -134,7 +140,7 @@ func (p *MessageProcessor) Process(aliceRequest *AliceRequest) *AliceResponse {
 			}
 			return sayWithButtons(session, address)
 
-		} else if phrase == CHANGE_ADDRESS {
+		} else if phrase == changeAddress {
 			log.Printf("[INFO] User %s CHANGE_ADDRESS request", userID)
 			location.InProgress = true
 			location.Completed = false

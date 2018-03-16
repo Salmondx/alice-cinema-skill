@@ -9,6 +9,7 @@ import (
 
 const tableName = "alice-cinema-skill"
 
+// Location contains information about users location
 type Location struct {
 	UserID     string `json:"userID`
 	InProgress bool   `json:"inProgress"`
@@ -17,11 +18,13 @@ type Location struct {
 	City       string `json:"city"`
 }
 
+// LocationStorage provides a storage for user location
 type LocationStorage interface {
 	Get(userID string) (*Location, error)
 	Save(userID string, location *Location) error
 }
 
+// InMemoryStorage stores info in a map
 type InMemoryStorage struct {
 	store map[string]*Location
 }
@@ -42,7 +45,7 @@ func (s *InMemoryStorage) Save(userID string, location *Location) error {
 	return nil
 }
 
-// DynamoDB storage
+// DynamoStorage stores info in AWS DynamoDB
 type DynamoStorage struct {
 	client *dynamodb.DynamoDB
 }

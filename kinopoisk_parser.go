@@ -13,8 +13,8 @@ import (
 	"golang.org/x/net/html/charset"
 )
 
-const SEARCH_URL_TEMPLATE = "https://www.kinopoisk.ru/index.php?kp_query=%s"
-const SHOWTIME_URL_TEMPLATE = "https://kinopoisk.ru%s?search=%s"
+const searchURLTemplate = "https://www.kinopoisk.ru/index.php?kp_query=%s"
+const showtimeURLTemplate = "https://kinopoisk.ru%s?search=%s"
 
 // GetShowtimes returns a search result from kinopoisk.ru based on movie name and a user location
 func GetShowtimes(movieName, city, region string) (*SearchResult, error) {
@@ -23,7 +23,7 @@ func GetShowtimes(movieName, city, region string) (*SearchResult, error) {
 		return nil, err
 	}
 	// find a movie schedule
-	showtimeRedirectLink := fmt.Sprintf(SHOWTIME_URL_TEMPLATE, link, url.QueryEscape(region))
+	showtimeRedirectLink := fmt.Sprintf(showtimeURLTemplate, link, url.QueryEscape(region))
 	cinemas, err := findSchedule(showtimeRedirectLink)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func GetShowtimes(movieName, city, region string) (*SearchResult, error) {
 }
 
 func findMovieInfo(movieName string) (string, string, error) {
-	resp, err := GetWithProxy(fmt.Sprintf(SEARCH_URL_TEMPLATE, url.QueryEscape(movieName)))
+	resp, err := getWithProxy(fmt.Sprintf(searchURLTemplate, url.QueryEscape(movieName)))
 	if err != nil {
 		return "", "", err
 	}
@@ -94,7 +94,7 @@ func findMovieInfo(movieName string) (string, string, error) {
 }
 
 func findSchedule(redirectLink string) ([]Cinema, error) {
-	showtimeRaw, err := GetWithProxy(redirectLink)
+	showtimeRaw, err := getWithProxy(redirectLink)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +156,7 @@ func findSchedule(redirectLink string) ([]Cinema, error) {
 	return cinemas, nil
 }
 
-func GetWithProxy(siteURL string) (string, error) {
+func getWithProxy(siteURL string) (string, error) {
 	requestURL := "https://api.proxycrawl.com/?token=&url=" + siteURL
 
 	httpClient := &http.Client{}
