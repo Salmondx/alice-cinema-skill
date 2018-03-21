@@ -200,7 +200,7 @@ func constructShowtimesPhrase(searchResult *SearchResult, userTime time.Time) st
 				builder.WriteString("фильм начинается в " + showtime.Showtimes[0].Time.Format("15:04"))
 			} else {
 				builder.WriteString("сеансы начинаются в " + showtime.Showtimes[0].Time.Format("15:04"))
-				builder.WriteString(" и в " + showtime.Showtimes[1].Time.Format("15:04") + " часов")
+				builder.WriteString(" и в " + showtime.Showtimes[1].Time.Format("15:04"))
 			}
 			builder.WriteString(". ")
 		} else {
@@ -208,7 +208,7 @@ func constructShowtimesPhrase(searchResult *SearchResult, userTime time.Time) st
 				builder.WriteString("в " + showtime.Showtimes[0].Time.Format("15:04"))
 			} else {
 				builder.WriteString("в " + showtime.Showtimes[0].Time.Format("15:04"))
-				builder.WriteString(" и в " + showtime.Showtimes[1].Time.Format("15:04") + " часов")
+				builder.WriteString(" и в " + showtime.Showtimes[1].Time.Format("15:04"))
 			}
 			builder.WriteString(". ")
 		}
