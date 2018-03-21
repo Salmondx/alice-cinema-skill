@@ -59,6 +59,9 @@ func main() {
 	}
 	processor := NewProcessor(dynamoStorage)
 	http.HandleFunc("/dialog", handler(processor))
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("healthy"))
+	})
 	log.Printf("[INFO] Starting server on port 5000")
 	log.Fatal(http.ListenAndServe(":5000", nil))
 }
