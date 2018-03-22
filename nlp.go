@@ -132,14 +132,15 @@ func (p *MessageProcessor) Process(aliceRequest *AliceRequest) *AliceResponse {
 		return say(session, p.getAnswer("LOCATION_CONFIRMED"))
 	} else {
 		// buttons actions
-		if phrase == getAddress {
+		if phrase == "" {
+			return sayWithButtons(session, p.getAnswer("WELCOME"))
+		} else if phrase == getAddress {
 			log.Printf("[INFO] User %s GET_ADDRESS request", userID)
 			address := "Ваш адрес: город " + location.City
 			if location.Subway != "" {
 				address += ", метро " + location.Subway
 			}
 			return sayWithButtons(session, address)
-
 		} else if phrase == changeAddress {
 			log.Printf("[INFO] User %s CHANGE_ADDRESS request", userID)
 			location.InProgress = true
@@ -336,6 +337,10 @@ func availableAnswers() map[string][]string {
 	answers["SYSTEM_ERROR"] = []string{
 		"Что-то мне стало нехорошо, попробуйте позже, пожалуйста",
 		"Что-то мне сегодня не очень, попробуйте через некоторое время",
+	}
+	answers["WELCOME"] = []string{
+		"Привет, какой фильм вы хотите посмотреть?",
+		"Привет, на какой фильм мне найти сеансы?",
 	}
 	return answers
 }
